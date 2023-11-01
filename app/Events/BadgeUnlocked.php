@@ -2,6 +2,7 @@
 
 namespace App\Events;
 
+use App\Models\User;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
@@ -17,7 +18,7 @@ class BadgeUnlocked
     /**
      * Create a new event instance.
      */
-    public function __construct()
+    public function __construct(public string $badge_name, public User $user)
     {
         //
     }

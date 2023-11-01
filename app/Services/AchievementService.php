@@ -3,7 +3,9 @@
 namespace App\Services;
 
 use App\Events\AchievementUnlocked;
+use App\Events\BadgeUnlocked;
 use App\Models\Achievement;
+use App\Models\Badge;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 
@@ -41,6 +43,25 @@ class AchievementService
 
                 // Dispatch the AchievementUnlocked event
                 event(new AchievementUnlocked($achievementName, $user));
+
+                $this->unlockBadge($user);
+            }
+        }
+    }
+
+    protected function unlockBadge(User $user)
+    {
+        $achievementsCount = $user->achievements()->count();
+
+        $badges = Badge::all();
+
+        foreach ($badges as $rule) {
+            // Check if the user has earned a new badge based on the number of achievements
+            if ($achievementsCount >= $rule->required_achievements && !$user->hasBadge($rule->name)) {
+                $user->badges()->attach($rule);
+
+                //fire badge unlocked event
+                event(new BadgeUnlocked($rule->name, $user));
             }
         }
     }
