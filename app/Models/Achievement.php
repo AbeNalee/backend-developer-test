@@ -12,4 +12,11 @@ class Achievement extends Model
     protected $fillable = [
         'name', 'type', 'threshold'
     ];
+
+    public function users()
+    {
+        return $this->belongsToMany(User::class)
+            ->using(UserAchievement::class)
+            ->withTimestamps();
+    }
 }
