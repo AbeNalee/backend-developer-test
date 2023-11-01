@@ -14,13 +14,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $users = User::factory(5)->create();
+        $lessons = Lesson::factory()
+            ->count(20)
+            ->create();
 
-//        $lessons = Lesson::factory()
-//            ->count(20)
-//            ->create();
-//
-//        $this->call(AchievementsTableSeeder::class);
-//        $this->call(BadgesTableSeeder::class);
+        $this->call(AchievementsTableSeeder::class);
+        $this->call(BadgesTableSeeder::class);
     }
 }
