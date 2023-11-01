@@ -17,7 +17,7 @@ class AchievementService
 
         foreach ($achievements as $achievement) {
             // Check if the user has already unlocked this achievement
-            if ($user->hasAchievement($achievement->name)) {
+            if ($user->hasUnlockedAchievement($achievement->name)) {
                 continue; // User has this achievement, move to the next
             }
 
@@ -36,7 +36,7 @@ class AchievementService
                 $progress++;
 
                 // Check if the achievement threshold is met
-                if ($progress == $achievement->threshold) {
+                if ($progress == $requiredThreshold) {
                     // Unlock the achievement
                     $user->achievements()->updateExistingPivot($achievement,
                         [
@@ -75,5 +75,19 @@ class AchievementService
                 event(new BadgeUnlocked($rule->name, $user));
             }
         }
+    }
+
+    public function getNextAchievementByType(User $user, $type, $currentProgress)
+    {
+        $nextAchievement = Achievement::where('type', $type)
+            ->where('threshold', '>', $currentProgress)
+            ->orderBy('threshold')
+            ->first();
+
+        if ($nextAchievement) {
+            return $nextAchievement;
+        }
+
+        return null; // No next achievement found
     }
 }

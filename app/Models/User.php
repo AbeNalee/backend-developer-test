@@ -74,8 +74,7 @@ class User extends Authenticatable
      */
     public function achievements()
     {
-        return $this->belongsToMany(Achievement::class)
-            ->using(UserAchievement::class)
+        return $this->belongsToMany(Achievement::class, 'user_achievements')
             ->withPivot('progress', 'unlocked_at')
             ->withTimestamps();
     }
@@ -87,8 +86,7 @@ class User extends Authenticatable
      */
     public function badges()
     {
-        return $this->belongsToMany(Badge::class)
-            ->using(UserBadge::class)
+        return $this->belongsToMany(Badge::class, 'user_badges')
             ->withTimestamps();
     }
 
@@ -115,6 +113,15 @@ class User extends Authenticatable
     }
 
     /**
+     * check if user has unlocked achievement
+     */
+    public function hasUnlockedAchievement($achievement)
+    {
+        return $this->hasAchievement($achievement) &&
+            $this->achievements()->where('name', $achievement)->first()->pivot->is_unlocked;
+    }
+
+    /**
      * Check if user has badge
      * @param $badge
      * @return bool
@@ -136,6 +143,22 @@ class User extends Authenticatable
         }
 
         return false;
+    }
+
+    public function getCurrentBadge()
+    {
+        return $this->badges()->orderBy('required_achievements', 'desc')->first();
+    }
+
+    public function getNextBadge()
+    {
+        // Get the number of achievements the user has unlocked
+        $userAchievementsCount = $this->achievements->count();
+
+        // Query for the next badge based on the number of achievements
+        return Badge::where('required_achievements', '>', $userAchievementsCount)
+            ->orderBy('required_achievements')
+            ->first();
     }
 }
 

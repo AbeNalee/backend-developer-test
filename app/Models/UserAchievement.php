@@ -8,4 +8,25 @@ use Illuminate\Database\Eloquent\Model;
 class UserAchievement extends Model
 {
     use HasFactory;
+
+    protected $table = 'user_achievements';
+
+    protected $fillable = [
+        //
+    ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function achievement()
+    {
+        return $this->belongsTo(Achievement::class);
+    }
+
+    public function getIsUnlockedAttribute()
+    {
+        return $this->unlocked_at !== null;
+    }
 }
