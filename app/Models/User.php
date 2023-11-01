@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Services\AchievementService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -147,6 +148,10 @@ class User extends Authenticatable
 
     public function getCurrentBadge()
     {
+        if (! $this->badges()->count()) {
+            $badge =  Badge::orderBy('required_achievements')->first();
+            $this->badges()->attach($badge);
+        }
         return $this->badges()->orderBy('required_achievements', 'desc')->first();
     }
 

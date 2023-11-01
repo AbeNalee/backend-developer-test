@@ -13,23 +13,26 @@ class AchievementsController extends Controller
         $unlockedAchievements = $user->achievements()->wherePivotNotNull('unlocked_at')
             ->pluck('name')->toArray();
 
-        $nextAvailable = Achievement::whereNotIn('name', $unlockedAchievements)
-            ->groupBy('type')
-            ->map(function ($achievements) {
-                return $achievements->sortBy('threshold')->values();
-            })->map(function ($achievements) {
-                return $achievements->first();
-            })->pluck('name')->toArray();
+        $nextAvailable = [];
+        $achievementTypes = Achievement::select('type')->groupBy('type')->pluck('type');
+
+        foreach ($achievementTypes as $type) {
+            $nextAvailable[] = Achievement::select('name')
+                ->where('type', $type)
+                ->whereNotIn('name', $unlockedAchievements)
+                ->orderBy('threshold')
+                ->first()->name;
+        }
 
         $currentBadge = $user->getCurrentBadge()->name;
-        $nextBadge = $user->getNextBadge()->name;
+        $nextBadge = $user->getNextBadge();
 
         return response()->json([
             'unlocked_achievements' => $unlockedAchievements,
             'next_available_achievements' => $nextAvailable,
             'current_badge' => $currentBadge,
-            'next_badge' => $nextBadge,
-            'remaing_to_unlock_next_badge' => $nextBadge->required_achievements - $user->achievements->count()
+            'next_badge' => $nextBadge->name,
+            'remaining_to_unlock_next_badge' => $nextBadge->required_achievements - $user->achievements->count()
         ]);
     }
 }
