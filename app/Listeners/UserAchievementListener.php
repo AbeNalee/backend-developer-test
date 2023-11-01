@@ -21,8 +21,21 @@ class UserAchievementListener
      */
     public function handle(object $event): void
     {
-        $user = $event->user;
+        switch (get_class($event)) {
+            case 'App\Events\CommentWritten':
+                $user = $event->comment->user;
+                $progress = $user->comments()->count();
+                break;
+            case 'App\Events\LessonWatched':
+                $user = $event->user;
+                $progress = $user->watched()->count();
+                break;
+            default:
+                $user = $event->user;
+                $progress = 0;
+                break;
+        }
 
-        $this->achievementService->unlockAchievement($user, get_class($event));
+        $this->achievementService->unlockAchievement($user, get_class($event), $progress);
     }
 }

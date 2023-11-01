@@ -119,7 +119,7 @@ class User extends Authenticatable
     public function hasUnlockedAchievement($achievement)
     {
         return $this->hasAchievement($achievement) &&
-            $this->achievements()->where('name', $achievement)->first()->pivot->is_unlocked;
+            $this->achievements()->where('name', $achievement)->first()->pivot->unlocked_at !== null;
     }
 
     /**

@@ -11,32 +11,32 @@ use Illuminate\Support\Carbon;
 
 class AchievementService
 {
-    public function unlockAchievement(User $user, $achievementType)
+    public function unlockAchievement(User $user, $achievementType, $progress)
     {
-        $achievements = Achievement::where('type', $achievementType)->get();
+        $achievements = Achievement::where('type', $achievementType)
+            ->get();
 
+        $requiredThreshold = 0;
         foreach ($achievements as $achievement) {
             // Check if the user has already unlocked this achievement
             if ($user->hasUnlockedAchievement($achievement->name)) {
                 continue; // User has this achievement, move to the next
             }
 
-            $requiredThreshold = $achievement->threshold;
+            if ($progress > $requiredThreshold) {
+                $requiredThreshold = $achievement->threshold;
 
-            $userAchievement = $user->achievements()
-                ->where('achievements.name', $achievement->name)
-                ->first();
+                $userAchievement = $user->achievements()
+                    ->where('achievements.name', $achievement->name)
+                    ->first();
 
-            if (!$userAchievement) {
-                // Achievement doesn't exist for the user, create a new entry
-                $user->achievements()->attach($achievement, ['progress' => 1]);
-            } else {
-                // Increment progress
-                $progress = $userAchievement->pivot->progress;
-                $progress++;
+                if (!$userAchievement) {
+                    // Achievement doesn't exist for the user, create a new entry
+                    $user->achievements()->attach($achievement, ['progress' => $progress]);
+                }
 
                 // Check if the achievement threshold is met
-                if ($progress == $requiredThreshold) {
+                if ($progress >= $requiredThreshold) {
                     // Unlock the achievement
                     $user->achievements()->updateExistingPivot($achievement,
                         [

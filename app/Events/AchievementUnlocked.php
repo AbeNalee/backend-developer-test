@@ -18,7 +18,7 @@ class AchievementUnlocked
     /**
      * Create a new event instance.
      */
-    public function __construct(public string $achievementName, public User $user)
+    public function __construct(public string $achievement_name, public User $user)
     {
         //
     }
