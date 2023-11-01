@@ -66,5 +66,76 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Lesson::class)->wherePivot('watched', true);
     }
+
+    /**
+     * Many-to-many relationship with achievements.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function achievements()
+    {
+        return $this->belongsToMany(Achievement::class)
+            ->using(UserAchievement::class)
+            ->withPivot('progress', 'unlocked_at')
+            ->withTimestamps();
+    }
+
+    /**
+     * Many-to-many relationship with badges.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function badges()
+    {
+        return $this->belongsToMany(Badge::class)
+            ->using(UserBadge::class)
+            ->withTimestamps();
+    }
+
+    /**
+     * Check if user has achievement
+     */
+    public function hasAchievement($achievement)
+    {
+        // Check if the user has the achievement by its name
+        if (is_string($achievement)) {
+            return $this->achievements()->where('name', $achievement)->exists();
+        }
+
+        // Check if the user has the achievement by its ID
+        if (is_int($achievement)) {
+            return $this->achievements->contains('id', $achievement);
+        }
+
+        if ($achievement instanceof Achievement) {
+            return $this->achievements->contains('id', $achievement->id);
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if user has badge
+     * @param $badge
+     * @return bool
+     */
+    public function hasBadge($badge)
+    {
+        // Check if the user has the badge by its name
+        if (is_string($badge)) {
+            return $this->badges()->where('name', $badge)->exists();
+        }
+
+        // Check if the user has the badge by its ID
+        if (is_int($badge)) {
+            return $this->badges->contains('id', $badge);
+        }
+
+        if ($badge instanceof Badge) {
+            return $this->badges->contains('id', $badge->id);
+        }
+
+        return false;
+    }
 }
 
