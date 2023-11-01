@@ -11,40 +11,51 @@ use Illuminate\Support\Carbon;
 
 class AchievementService
 {
-    public function unlockAchievement(User $user, $achievementName)
+    public function unlockAchievement(User $user, $achievementType)
     {
-        $achievement = Achievement::where('name', $achievementName)->first();
+        $achievements = Achievement::where('type', $achievementType)->get();
 
-        if (!$achievement) {
-            // Achievement not found, handle the error as needed
-            return;
-        }
+        foreach ($achievements as $achievement) {
+            // Check if the user has already unlocked this achievement
+            if ($user->hasAchievement($achievement->name)) {
+                continue; // User has this achievement, move to the next
+            }
 
-        $userAchievement = $user->achievements()
-            ->where('achievements.name', $achievementName)
-            ->first();
+            $requiredThreshold = $achievement->threshold;
 
-        if (!$userAchievement) {
-            // Achievement doesn't exist for the user, create a new entry
-            $user->achievements()->attach($achievement, ['progress' => 1]);
-        } else {
-            // Increment progress
-            $userAchievement->pivot->progress++;
+            $userAchievement = $user->achievements()
+                ->where('achievements.name', $achievement->name)
+                ->first();
 
-            // Check if the achievement threshold is met
-            if ($userAchievement->pivot->progress >= $achievement->threshold) {
-                // Unlock the achievement
-                $user->achievements()->updateExistingPivot($achievement,
-                    [
-                        'progress' => $achievement->threshold,
-                        'unlocked_at' => Carbon::now()
-                    ]
-                );
+            if (!$userAchievement) {
+                // Achievement doesn't exist for the user, create a new entry
+                $user->achievements()->attach($achievement, ['progress' => 1]);
+            } else {
+                // Increment progress
+                $progress = $userAchievement->pivot->progress;
+                $progress++;
 
-                // Dispatch the AchievementUnlocked event
-                event(new AchievementUnlocked($achievementName, $user));
+                // Check if the achievement threshold is met
+                if ($progress == $achievement->threshold) {
+                    // Unlock the achievement
+                    $user->achievements()->updateExistingPivot($achievement,
+                        [
+                            'progress' => $progress,
+                            'unlocked_at' => Carbon::now()
+                        ]
+                    );
 
-                $this->unlockBadge($user);
+                    // Dispatch the AchievementUnlocked event
+                    event(new AchievementUnlocked($achievement->name, $user));
+
+                    $this->unlockBadge($user);
+                } else {
+                    $user->achievements()->updateExistingPivot($achievement,
+                        [
+                            'progress' => $progress
+                        ]
+                    );
+                }
             }
         }
     }
